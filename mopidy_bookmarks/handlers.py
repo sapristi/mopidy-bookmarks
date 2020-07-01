@@ -17,7 +17,8 @@ def make_jsonrpc_wrapper(bmcore_actor):
             "core.create_bookmark": bmcore.BMCore.create_bookmark,
             "core.resume_bookmark": bmcore.BMCore.resume_bookmark,
             "core.sync_current_bookmark": bmcore.BMCore.sync_current_bookmark,
-            "core.stop_sync": bmcore.BMCore.stop_sync
+            "core.stop_sync": bmcore.BMCore.stop_sync,
+            "core.get_sync_status": bmcore.BMCore.get_sync_status,
         }
     )
     return jsonrpc.JsonRpcWrapper(
@@ -26,6 +27,7 @@ def make_jsonrpc_wrapper(bmcore_actor):
             "core.resume_bookmark": bmcore_actor.resume_bookmark,
             "core.sync_current_bookmark": bmcore_actor.sync_current_bookmark,
             "core.stop_sync": bmcore_actor.stop_sync,
+            "core.get_sync_status": bmcore_actor.get_sync_status,
             "core.describe": inspector.describe,
         },
         decoders=[lambda x: x],
@@ -55,7 +57,8 @@ class BMWebSocketHandler(MopidyWebSocketHandler):
         # tornado ioloop from the HttpServer thread of mopidy
         io_loop = tornado.ioloop.IOLoop.current()
         bmcore.registry.setdefault("io_loop", io_loop)
-        self.bmcore = bmcore.registry.get("core")
+        logger.info("REGISTRY %s", bmcore.registry)
+        self.bmcore = bmcore.registry.get("bmcore")
         logger.info("WS HANDLER: INIT WITH %s; %s", self.bmcore, io_loop)
         self.jsonrpc = make_jsonrpc_wrapper(self.bmcore.proxy())
         self.allowed_origins = allowed_origins
