@@ -1,5 +1,5 @@
 from mopidy_bookmarks import Extension
-from mopidy_bookmarks import frontend as frontend_lib
+# from mopidy_bookmarks import frontend as frontend_lib
 
 
 def test_get_default_config():

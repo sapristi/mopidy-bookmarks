@@ -17,18 +17,33 @@ logger = logging.getLogger(__name__)
 
 main_io_loop = tornado.ioloop.IOLoop.current()
 
-registry = {}
+
+class BMRegistry:
+    """Class used to pass references around"""
+    __slots__ = (
+        "BMWebSocketHandler", # avoid loop dependancy
+        "get_data_dir", # frontend extensions cannot take parameters in ?
+        "io_loop", # io_loop used for the websocket broadcast
+        "bmcore"
+    )
+    def __init__(self):
+        self.BMWebSocketHandler = None
+        self.get_data_dir = None
+        self.io_loop = None
+        self.bmcore = None
+
+registry = BMRegistry()
 
 class BMCore(pykka.ThreadingActor):
 
-    def __init__(self, mopidy_core, data_dir):
+    def __init__(self, mopidy_core, config, data_dir):
         super().__init__()
         self.mopidy_core = mopidy_core
 
         self.bmcontroller_actor = BookmarksController.start(
             data_dir / "bookmark.sqlite3",
-            100,
-            10000
+            config["bookmarks"]["max_bookmarks"],
+            config["bookmarks"]["max_bookmarks_data_length"]
         )
         self.controller = self.bmcontroller_actor.proxy()
         self.current_bookmark = None
@@ -39,12 +54,8 @@ class BMCore(pykka.ThreadingActor):
         self.bmcontroller_actor.stop()
 
     def start_syncing(self, bookmark_name):
-
-        def callback():
-            self.sync_current_bookmark()
-            self.start_syncing()
-
         self.current_bookmark = bookmark_name
+        sync_current_bookmark(self)
 
     def sync_current_bookmark(self):
         if not self.current_bookmark:
@@ -73,22 +84,28 @@ class BMCore(pykka.ThreadingActor):
         self.resuming = True
         self.mopidy_core.tracklist.clear()
         bookmark_data = self.controller.load(bookmark_name).get()
+
         logger.info('Resuming %s', bookmark_name)
-        if (bookmark_data["tracks"] is None or
-            bookmark_data["current_track"] is None or
-            bookmark_data["current_time"] is None):
+        if (
+                bookmark_data["tracks"] is None or
+                bookmark_data["current_track"] is None or
+                bookmark_data["current_time"] is None
+        ):
             logger.warning("Cannot resume bookmark %s", bookmark_data)
             return False
+
         track_uris = json.loads(bookmark_data["tracks"])
         tltracks = self.mopidy_core.tracklist.add(uris=track_uris).get()
         current_tlid = tltracks[bookmark_data["current_track"]].tlid
-        self.mopidy_core.playback.play(tlid=current_tlid).get()
+        self.mopidy_core.playback.play(tlid=current_tlid)
         self.mopidy_core.playback.set_state("playing")
-        self.mopidy_core.playback.seek(time_position=bookmark_data["current_time"]).get()
+        self.mopidy_core.playback.seek(time_position=bookmark_data["current_time"])
         self.start_syncing(bookmark_name)
         self.resuming = False
-        logger.info("Resumed %s", bookmark_name)
+        logger.info("Resumed bookmark %s", bookmark_name)
         self.stop_to_ignore = 2
+        event = {"event": "sync_start"}
+        registry.BMWebSocketHandler.broadcast(event, registry.io_loop)
         return True
 
     def stop_sync(self):
@@ -101,7 +118,7 @@ class BMCore(pykka.ThreadingActor):
         self.current_bookmark = None
 
         event = {"event": "sync_stop"}
-        registry["BMWebSocketHandler"].broadcast(event, registry.get("io_loop"))
+        registry.BMWebSocketHandler.broadcast(event, registry.io_loop)
         return True
 
     def get_sync_status(self):
@@ -109,23 +126,25 @@ class BMCore(pykka.ThreadingActor):
             "current_bookmark": self.current_bookmark
         }
 
-    def tick(self):
-        logger.info("Ticking, syncing")
-        self.sync_current_bookmark()
-
 
 class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
     def __init__(self, config, core):
         super().__init__()
-        self.core = core
-        self.data_dir = registry["Extension"].get_data_dir(config)
-        logger.info('INIT CORE LISTENER(%s) %s',  core, self.data_dir)
+        self.mopidy_core = core
+        self.data_dir = registry.get_data_dir(config)
+        self.config = config
+        logger.info('INIT CORE LISTENER(%s) %s', self.mopidy_core, self.config["bookmarks"])
 
     def on_start(self):
-        self.bmcore = BMCore.start(self.core, self.data_dir)
-        self.timer = PeriodicTimer.start(3, [self.bmcore])
+        self.bmcore = BMCore.start(self.mopidy_core, self.config, self.data_dir)
+        tick_period = self.config["bookmarks"]["sync_period"]
+        self.timer = PeriodicTimer.start(
+            tick_period,
+            lambda: self.bmcore.proxy().sync_current_bookmark()
+            [self.bmcore]
+        )
         self.timer.proxy().start_ticking()
-        registry["bmcore"] = self.bmcore
+        registry.bmcore = self.bmcore
         logger.info("START CORE LISTENER; %s", self.bmcore)
 
     def on_stop(self):
@@ -142,11 +161,11 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
 
 
 class PeriodicTimer(pykka.ThreadingActor):
-    def __init__(self, period, to_notify):
+    def __init__(self, period, callback):
         super().__init__()
-        self.period = period
+        self.period = period / 1000.
         self.stop_pending = False
-        self.to_notify = to_notify
+        self.callback = callback
 
     def start_ticking(self):
         self._periodic()
@@ -161,7 +180,5 @@ class PeriodicTimer(pykka.ThreadingActor):
         if self.stop_pending:
             return
 
-        for actor in self.to_notify:
-            actor.proxy().tick()
-
+        self.callback()
         threading.Timer(self.period, self._periodic).start()

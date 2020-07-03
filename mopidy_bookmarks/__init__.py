@@ -9,7 +9,7 @@ from mopidy import config, ext
 from . import handlers
 from . import core
 
-__version__ = pkg_resources.get_distribution("Mopidy-Mowecl").version
+__version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,13 @@ class Extension(ext.Extension):
 
     def get_config_schema(self):
         schema = super().get_config_schema()
+        schema["sync_period"] = config.Integer(minimum=50)
+
         return schema
 
     def setup(self, registry):
-        core.registry["BMWebSocketHandler"] = handlers.BMWebSocketHandler
-        core.registry["Extension"] = self
+        core.registry.BMWebSocketHandler = handlers.BMWebSocketHandler
+        core.registry.get_data_dir = self.get_data_dir
         registry.add("frontend", core.MopidyCoreListener)
         registry.add(
             "http:app", {
@@ -43,12 +45,6 @@ class Extension(ext.Extension):
         }
 
         return [
-            # (
-            #     r"/api/(.*)",
-            #     handlers.BMHttpHandler,
-            #     {"data_dir": self.get_data_dir(config),
-            #      "allowed_origins": allowed_origins}
-            # ),
             (
                 r"/ws/?", handlers.BMWebSocketHandler, {
                     "core": core,

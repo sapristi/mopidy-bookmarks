@@ -1,67 +1,55 @@
 import os
-import sqlite3
-import json
 import logging
-import functools
 
-from .base import Controller
+from peewee import (
+    Model, Field,
+    SqliteDatabase,
+    TextField, IntegerField,
+)
+
+from .generic import LTextField, JsonField, LimitError
 
 logger = logging.getLogger(__name__)
 
-class BookmarksController(Controller):
-    def __init__(self, dbfile, max_bookmarks, max_length):
-        super().__init__(
-            dbfile, max_bookmarks, max_length, "bookmark",
-            """(
-            name text,
-            current_track int,
-            current_time int,
-            tracks text
-            )""")
+class BookmarksController:
 
-    def _bookmark_exists(self, name):
-        c = self.conn().cursor()
-        c.execute("select * from bookmark where name=?", (name,))
-        return len(c.fetchall()) > 0
+    def __init__(self, dbfile, max_bookmarks, max_length):
+
+        db = SqliteDatabase(dbfile)
+        class Bookmark(Model):
+            name = LTextField(primary_key=True, max_length=100)
+            current_track = IntegerField(null=True)
+            current_time = IntegerField(null=True)
+            track_uris = JsonField(max_length=max_length, null=True)
+
+            class Meta:
+                database = db
+
+        self.Bookmark = Bookmark
+        self.max_bookmarks = max_bookmarks
+        db.create_tables([self.Bookmark])
 
     def save(self, name, track_uris):
-        logger.info("Saving bookmark %s", name)
-        uris_str = json.dumps(track_uris)
-        self._check_length(name, uris_str)
-        c = self.conn().cursor()
-        if self._bookmark_exists(name):
-            c.execute("""update bookmark
-            set tracks=?
-            where name=?""",
-            (uris_str, name))
-        else:
-            self._check_rows_nb_before_insert()
-            c.execute("""insert into bookmark
-            (name, tracks) values (?, ?)""",
-            (name, uris_str))
-        self.conn().commit()
+        bookmark, created = self.Bookmark.get_or_create(name=name)
+        if created and self.Bookmark.select().count() > self.max_bookmarks:
+            raise LimitError(f"Maximum number of bookmarks ({self.max_bookmarks}) reached.")
+        bookmark.track_uris = track_uris
+        bookmark.current_track = None
+        bookmark.current_time = None
+        bookmark.save()
 
     def update(self, name, current_track, current_time):
-        c = self.conn().cursor()
-        logger.info("Updating bookmark %s with %s, %s", name, current_track, current_time)
-        c.execute("""update bookmark
-        set current_track=?, current_time=?
-        where name=?""",
-        (current_track, current_time, name))
-        self.conn().commit()
+        bookmark = self.Bookmark[name]
+        bookmark.current_track=current_track
+        bookmark.current_time=current_time
+        bookmark.save()
 
     def delete(self, name):
-        c = self.conn().cursor()
-        c.execute("""delete from bookmark where name=?""", (name,))
-        self.conn().commit()
+        bookmark = self.Bookmark[name]
+        bookmark.delete_instance()
 
     def load(self, name):
-        c = self.conn().cursor()
-        c.execute("select * from bookmark where name=?", (name,))
-        row = c.fetchone()
-        return {
-            "name": row[0],
-            "current_track": row[1],
-            "current_time": row[2],
-            "tracks": row[3]
-        }
+        return self.Bookmark[name]
+
+    def list(self):
+        return self.Bookmark.select()

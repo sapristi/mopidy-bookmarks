@@ -1,41 +1,46 @@
 import os
-import sqlite3
-import json
 import logging
-import functools
 
-from .base import Controller
+from peewee import (
+    Model, Field,
+    SqliteDatabase,
+    TextField, IntegerField,
+    DoesNotExist
+)
+
+from .generic import LTextField, JsonField, LimitError
 
 logger = logging.getLogger(__name__)
 
 
-class StoreController(Controller):
-    def __init__(self, dbfile, max_keys, max_length):
-        super().__init__(dbfile, max_keys, max_length, "store", "(key text, data text)")
+class StoreController:
+    def __init__(self, dbfile, max_items, max_length):
 
-    def _key_exists(self, key):
-        c = self.conn.cursor()
-        c.execute("select * from store where key=?", (key,))
-        return len(c.fetchall()) > 0
+        db = SqliteDatabase(dbfile)
+        class Store(Model):
+            key = LTextField(primary_key=True, max_length=100)
+            value = JsonField(max_length=max_length)
 
-    def save(self, key, data):
-        c = self.conn.cursor()
-        self._check_length(key, data)
-        if self._key_exists(key):
-            c.execute("update store set data=? where key=?",
-                    (data, key))
-        else:
-            self._check_rows_nb_before_insert()
-            c.execute("insert into store (key, data) values (?, ?)",
-                    (key, data))
-        self.conn.commit()
+            class Meta:
+                database = db
+
+        self.Store = Store
+        self.max_keys = max_keys
+        db.create_tables([self.Store])
+
+    def save(self, key, value):
+        item, created = self.Store.get_or_create(key=key)
+        if created and self.Store.select().count() > self.max_items:
+            raise LimitError(f"Maximum number of items ({self.max_items}) reached.")
+        item.value = value
+        item.save()
 
     def load(self, key):
-        c = self.conn.cursor()
-        c.execute("select data from store where key=?", (key,))
-        res = c.fetchone()
-        return res[0] if res else b"null"
+        try:
+            return self.Store[key]
+        except DoesNotExist:
+            return None
 
     def delete(self, key):
-        c = self.conn.cursor()
-        c.execute("delete * from store where key=?", (key,))
+        item = self.Store[key]
+        item.delete_instance()
