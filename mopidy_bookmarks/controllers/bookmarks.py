@@ -1,5 +1,6 @@
 import os
 import logging
+import pykka
 
 from peewee import (
     Model, Field,
@@ -11,11 +12,11 @@ from .generic import LTextField, JsonField, LimitError
 
 logger = logging.getLogger(__name__)
 
-class BookmarksController:
+class BookmarksController(pykka.ThreadingActor):
 
     def __init__(self, dbfile, max_bookmarks, max_length):
-
-        db = SqliteDatabase(dbfile)
+        super().__init__()
+        self.db = SqliteDatabase(None)
         class Bookmark(Model):
             name = LTextField(primary_key=True, max_length=100)
             current_track = IntegerField(null=True)
@@ -23,13 +24,22 @@ class BookmarksController:
             track_uris = JsonField(max_length=max_length, null=True)
 
             class Meta:
-                database = db
+                database = self.db
 
         self.Bookmark = Bookmark
         self.max_bookmarks = max_bookmarks
-        db.create_tables([self.Bookmark])
+        self.dbfile = dbfile
+
+    def on_start(self):
+        self.db.init(self.dbfile)
+        self.db.create_tables([self.Bookmark])
+        logger.info("STARTED")
+
+    def on_stop(self):
+        self.db.close()
 
     def save(self, name, track_uris):
+        logger.info("Creating with name %s", name)
         bookmark, created = self.Bookmark.get_or_create(name=name)
         if (created and
             self.max_bookmarks and
@@ -55,4 +65,4 @@ class BookmarksController:
         return self.Bookmark[name]
 
     def list(self):
-        return self.Bookmark.select()
+        return list(self.Bookmark.select().dicts())

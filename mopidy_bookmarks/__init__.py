@@ -27,7 +27,8 @@ class Extension(ext.Extension):
         schema = super().get_config_schema()
         schema["sync_period"] = config.Integer(minimum=50)
 
-        schema["max_bookamks"] = config.Integer(minimum=0)
+        schema["max_bookmarks"] = config.Integer(minimum=0)
+        schema["max_bookmark_length"] = config.Integer(minimum=0)
         return schema
 
     def setup(self, registry):
