@@ -30,7 +30,10 @@ class StoreController:
 
     def save(self, key, value):
         item, created = self.Store.get_or_create(key=key)
-        if created and self.Store.select().count() > self.max_items:
+        if (created and
+            self.max_items and
+            self.Store.select().count() > self.max_items
+        ):
             raise LimitError(f"Maximum number of items ({self.max_items}) reached.")
         item.value = value
         item.save()

@@ -31,7 +31,10 @@ class BookmarksController:
 
     def save(self, name, track_uris):
         bookmark, created = self.Bookmark.get_or_create(name=name)
-        if created and self.Bookmark.select().count() > self.max_bookmarks:
+        if (created and
+            self.max_bookmarks and
+            self.Bookmark.select().count() > self.max_bookmarks
+        ):
             raise LimitError(f"Maximum number of bookmarks ({self.max_bookmarks}) reached.")
         bookmark.track_uris = track_uris
         bookmark.current_track = None
