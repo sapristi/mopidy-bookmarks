@@ -2,6 +2,9 @@ from mopidy_bookmarks.controllers.bookmarks import BookmarksController
 from mopidy_bookmarks.controllers.generic import LimitError
 import logging
 
+
+pykka_logger = logging.getLogger("pykka")
+pykka_logger.setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 tl1 = ["uri1", "uri2"]
 tl2 = ["uri3", "uri2"]

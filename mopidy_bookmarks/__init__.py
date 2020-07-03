@@ -50,8 +50,8 @@ class Extension(ext.Extension):
             (
                 r"/ws/?", handlers.BMWebSocketHandler, {
                     "core": core,
-                    "allowed_origins": "*",
-                    "csrf_protection": False
+                    "allowed_origins": allowed_origins,
+                    "csrf_protection": config["http"]["csrf_protection"]
                 }
             )
         ]

@@ -33,13 +33,11 @@ class BookmarksController(pykka.ThreadingActor):
     def on_start(self):
         self.db.init(self.dbfile)
         self.db.create_tables([self.Bookmark])
-        logger.info("STARTED")
 
     def on_stop(self):
         self.db.close()
 
     def save(self, name, track_uris):
-        logger.info("Creating with name %s", name)
         bookmark, created = self.Bookmark.get_or_create(name=name)
         if (created and
             self.max_bookmarks and
