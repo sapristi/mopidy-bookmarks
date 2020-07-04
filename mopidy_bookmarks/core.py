@@ -4,6 +4,7 @@ import functools
 import json
 import asyncio
 import threading
+from playhouse.shortcuts import model_to_dict
 
 import tornado.websocket
 from mopidy.core import CoreListener, PlaybackController
@@ -98,7 +99,7 @@ class BMCore(pykka.ThreadingActor):
         self.start_syncing(name)
         self.resuming = False
         self.stop_to_ignore = 2
-        event = {"event": "sync_start"}
+        event = {"event": "sync_start", "bookmark": model_to_dict(bookmark)}
         registry.BMWebSocketHandler.broadcast(event, registry.io_loop)
         return True
 
@@ -123,7 +124,7 @@ class BMCore(pykka.ThreadingActor):
     def list(self):
         """List saved bookmarks."""
         return {
-            "bookmarks": self.controller.list().get().dicts()
+            "bookmarks": self.controller.list().get()
         }
 
 class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
