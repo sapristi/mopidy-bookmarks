@@ -7,33 +7,16 @@ import threading
 from playhouse.shortcuts import model_to_dict
 
 import tornado.websocket
-from mopidy.core import CoreListener, PlaybackController
+from mopidy.core import PlaybackController
 from mopidy.internal import jsonrpc
-# from .handlers import BMWebSocketHandler
+
+from .handlers import BMWebSocketHandler
 from .controllers import BookmarksController
 # from . import Extension
 
 # import logger
 logger = logging.getLogger(__name__)
 
-main_io_loop = tornado.ioloop.IOLoop.current()
-
-
-class BMRegistry:
-    """Class used to pass references around"""
-    __slots__ = (
-        "BMWebSocketHandler", # avoid loop dependancy
-        "get_data_dir", # frontend extensions cannot take parameters in ?
-        "io_loop", # io_loop used for the websocket broadcast
-        "bmcore"
-    )
-    def __init__(self):
-        self.BMWebSocketHandler = None
-        self.get_data_dir = None
-        self.io_loop = None
-        self.bmcore = None
-
-registry = BMRegistry()
 
 class BMCore(pykka.ThreadingActor):
 
@@ -100,7 +83,7 @@ class BMCore(pykka.ThreadingActor):
         self.resuming = False
         self.stop_to_ignore = 2
         event = {"event": "sync_start", "bookmark": model_to_dict(bookmark)}
-        registry.BMWebSocketHandler.broadcast(event, registry.io_loop)
+        BMWebSocketHandler.broadcast(event)
         return True
 
     def stop_sync(self):
@@ -112,7 +95,7 @@ class BMCore(pykka.ThreadingActor):
         self.current_bookmark = None
 
         event = {"event": "sync_stop"}
-        registry.BMWebSocketHandler.broadcast(event, registry.io_loop)
+        BMWebSocketHandler.broadcast(event)
         return True
 
     def get_sync_status(self):
@@ -127,34 +110,6 @@ class BMCore(pykka.ThreadingActor):
             "bookmarks": self.controller.list().get()
         }
 
-class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
-    def __init__(self, config, core):
-        super().__init__()
-        self.mopidy_core = core
-        self.data_dir = registry.get_data_dir(config)
-        self.config = config
-
-    def on_start(self):
-        self.bmcore = BMCore.start(self.mopidy_core, self.config, self.data_dir)
-        tick_period = self.config["bookmarks"]["sync_period"]
-        self.timer = PeriodicTimer.start(
-            tick_period,
-            lambda: self.bmcore.proxy().sync_current_bookmark()
-        )
-        self.timer.proxy().start_ticking()
-        registry.bmcore = self.bmcore
-
-    def on_stop(self):
-        logger.info('STOPPING')
-        self.bmcore.stop()
-        self.timer.stop()
-
-    def tracklist_changed(self):
-        logger.info('tracklist changed')
-        self.bmcore.proxy().stop_sync()
-
-    def playback_state_changed(self, old_state, new_state):
-        logger.info("new state: %s -> %s", old_state, new_state)
 
 
 class PeriodicTimer(pykka.ThreadingActor):

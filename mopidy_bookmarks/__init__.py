@@ -3,11 +3,13 @@ import pathlib
 import json
 import pkg_resources
 import tornado
+import pykka
 
 from mopidy import config, ext
+from mopidy.core import CoreListener
 
 from . import handlers
-from . import core
+from .core import BMCore, PeriodicTimer
 
 __version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
 
@@ -32,9 +34,7 @@ class Extension(ext.Extension):
         return schema
 
     def setup(self, registry):
-        core.registry.BMWebSocketHandler = handlers.BMWebSocketHandler
-        core.registry.get_data_dir = self.get_data_dir
-        registry.add("frontend", core.MopidyCoreListener)
+        registry.add("frontend", MopidyCoreListener)
         registry.add(
             "http:app", {
                 "name": self.ext_name,
@@ -50,9 +50,39 @@ class Extension(ext.Extension):
             (
                 r"/ws/?", handlers.BMWebSocketHandler, {
                     "core": core,
+                    "BMCore": BMCore,
                     "allowed_origins": allowed_origins,
                     "csrf_protection": config["http"]["csrf_protection"]
                 }
             )
         ]
 
+class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
+    def __init__(self, config, core):
+        super().__init__()
+        self.mopidy_core = core
+        self.data_dir = Extension.get_data_dir(config)
+        self.config = config
+
+    def on_start(self):
+        self.bmcore = BMCore.start(
+            self.mopidy_core, self.config, self.data_dir,
+            )
+        tick_period = self.config["bookmarks"]["sync_period"]
+        self.timer = PeriodicTimer.start(
+            tick_period,
+            lambda: self.bmcore.proxy().sync_current_bookmark()
+        )
+        self.timer.proxy().start_ticking()
+
+    def on_stop(self):
+        logger.info('STOPPING')
+        self.bmcore.stop()
+        self.timer.stop()
+
+    def tracklist_changed(self):
+        logger.info('tracklist changed')
+        self.bmcore.proxy().stop_sync()
+
+    def playback_state_changed(self, old_state, new_state):
+        logger.info("new state: %s -> %s", old_state, new_state)
