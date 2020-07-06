@@ -21,7 +21,7 @@ class BookmarksController(pykka.ThreadingActor):
             name = LTextField(primary_key=True, max_length=100)
             current_track = IntegerField(null=True)
             current_time = IntegerField(null=True)
-            track_uris = JsonField(max_length=max_length, null=True)
+            tracks = JsonField(max_length=max_length, null=True)
 
             class Meta:
                 database = self.db
@@ -37,14 +37,14 @@ class BookmarksController(pykka.ThreadingActor):
     def on_stop(self):
         self.db.close()
 
-    def save(self, name, track_uris):
+    def save(self, name, tracks):
         bookmark, created = self.Bookmark.get_or_create(name=name)
         if (created and
             self.max_bookmarks and
             self.Bookmark.select().count() > self.max_bookmarks
         ):
             raise LimitError(f"Maximum number of bookmarks ({self.max_bookmarks}) reached.")
-        bookmark.track_uris = track_uris
+        bookmark.tracks = tracks
         bookmark.current_track = None
         bookmark.current_time = None
         bookmark.save()
@@ -59,7 +59,7 @@ class BookmarksController(pykka.ThreadingActor):
         bookmark = self.Bookmark[name]
         bookmark.delete_instance()
 
-    def load(self, name):
+    def get(self, name):
         return self.Bookmark[name]
 
     def list(self):

@@ -7,14 +7,11 @@ import threading
 from playhouse.shortcuts import model_to_dict
 
 import tornado.websocket
-from mopidy.core import PlaybackController
 from mopidy.internal import jsonrpc
 
 from .handlers import BMWebSocketHandler
 from .controllers import BookmarksController
-# from . import Extension
 
-# import logger
 logger = logging.getLogger(__name__)
 
 
@@ -57,9 +54,9 @@ class BMCore(pykka.ThreadingActor):
         """Creates a new bookmark"""
         tltracks = self.mopidy_core.tracklist.get_tl_tracks().get()
         tracks = [tlt.track for tlt in tltracks]
-        track_uris = [t.uri for t in tracks]
-        logger.debug("Creating bookmark %s from %s", name, track_uris)
-        self.controller.save(name, track_uris)
+        tracks_dict = [{"uri": t.uri, "name": t.name, "length": t.length} for t in tracks]
+        logger.debug("Creating bookmark %s from %s", name, tracks_dict)
+        self.controller.save(name, tracks_dict)
         self.start_syncing(name)
 
     def resume(self, name):
@@ -70,7 +67,8 @@ class BMCore(pykka.ThreadingActor):
 
         logger.debug('Resuming %s', name)
 
-        tltracks = self.mopidy_core.tracklist.add(uris=bookmark.track_uris).get()
+        bookmark_uris = [t["uri"] for t in bookmark_uris.tracks]
+        tltracks = self.mopidy_core.tracklist.add(uris=bookmark_uris).get()
         if bookmark.current_track is not None:
             current_tlid = tltracks[bookmark.current_track].tlid
             self.mopidy_core.playback.play(tlid=current_tlid)
@@ -109,7 +107,6 @@ class BMCore(pykka.ThreadingActor):
         return {
             "bookmarks": self.controller.list().get()
         }
-
 
 
 class PeriodicTimer(pykka.ThreadingActor):
