@@ -10,6 +10,7 @@ from mopidy.core import CoreListener
 
 from . import handlers
 from .core import BMCore, PeriodicTimer
+from .backend import BookmarksBackend
 
 __version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
 
@@ -40,6 +41,7 @@ class Extension(ext.Extension):
                 "name": self.ext_name,
                 "factory": self.http_app_factory}
         )
+        registry.add("backend", BookmarksBackend)
 
     def http_app_factory(self, config, core):
         allowed_origins = {
@@ -56,6 +58,7 @@ class Extension(ext.Extension):
                 }
             )
         ]
+
 
 class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
     def __init__(self, config, core):
