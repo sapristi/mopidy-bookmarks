@@ -7,6 +7,8 @@ import functools
 import pykka
 
 from mopidy.internal import jsonrpc
+from mopidy import models
+
 
 from mopidy.http.handlers import WebSocketHandler as MopidyWebSocketHandler, _send_broadcast
 logger = logging.getLogger(__name__)
@@ -14,24 +16,27 @@ logger = logging.getLogger(__name__)
 def make_jsonrpc_wrapper(bmcore_actor, BMCore):
     inspector = jsonrpc.JsonRpcInspector(
         objects={
-            "core.create": BMCore.create,
+            "core.create_from_tracklist": BMCore.create_from_tracklist,
             "core.resume": BMCore.resume,
             "core.stop_sync": BMCore.stop_sync,
             "core.get_sync_status": BMCore.get_sync_status,
-            "core.list": BMCore.list,
+            "core.get_items": BMCore.get_items,
+            "core.as_list": BMCore.as_list,
         }
     )
     return jsonrpc.JsonRpcWrapper(
         objects={
-            "core.create": bmcore_actor.create,
+            "core.create_from_tracklist": bmcore_actor.create_from_tracklist,
             "core.resume": bmcore_actor.resume,
             "core.stop_sync": bmcore_actor.stop_sync,
             "core.get_sync_status": bmcore_actor.get_sync_status,
-            "core.list": bmcore_actor.list,
+            "core.get_items": bmcore_actor.get_items,
+            "core.as_list": bmcore_actor.as_list,
             "core.describe": inspector.describe,
         },
-        decoders=[lambda x: x],
-        encoders=[lambda x: x],
+
+        decoders=[models.model_json_decoder],
+        encoders=[models.ModelJSONEncoder],
     )
 
 

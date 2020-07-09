@@ -1,11 +1,13 @@
 import os
 import logging
 import pykka
+import time
 
 from peewee import (
     Model, Field,
     SqliteDatabase,
     TextField, IntegerField,
+    DoesNotExist
 )
 
 from .generic import LTextField, JsonField, LimitError
@@ -22,7 +24,7 @@ class BookmarksController(pykka.ThreadingActor):
             current_track = IntegerField(null=True)
             current_time = IntegerField(null=True)
             tracks = JsonField(max_length=max_length, null=True)
-
+            last_modified = IntegerField(null=True)
             class Meta:
                 database = self.db
 
@@ -47,7 +49,9 @@ class BookmarksController(pykka.ThreadingActor):
         bookmark.tracks = tracks
         bookmark.current_track = None
         bookmark.current_time = None
+        bookmark.last_modified = int(time.time())
         bookmark.save()
+        return bookmark
 
     def update(self, name, current_track, current_time):
         bookmark = self.Bookmark[name]
@@ -56,11 +60,19 @@ class BookmarksController(pykka.ThreadingActor):
         bookmark.save()
 
     def delete(self, name):
-        bookmark = self.Bookmark[name]
-        bookmark.delete_instance()
+        try:
+            bookmark = self.Bookmark[name]
+            bookmark.delete_instance()
+            return True
+        except DoesNotExist:
+            return False
 
     def get(self, name):
         return self.Bookmark[name]
 
-    def list(self):
-        return list(self.Bookmark.select().dicts())
+    def get_items(self, name):
+        bm = self.Bookmark[name]
+        return bm.tracks
+
+    def as_list(self):
+        return [bm.name for bm in self.Bookmark.select()]

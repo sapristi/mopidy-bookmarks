@@ -10,26 +10,28 @@ logger = logging.getLogger(__name__)
 class BookmarksPlaylistProvider(backend.PlaylistsProvider):
     def __init__(self, backend, config):
         super().__init__(backend)
-        self._controller = None
+        self._bmcore = None
 
     @property
-    def controller(self):
-        if not self._controller:
-            self._controller = pykka.ActorRegistry.get_by_class_name("BookmarksController")[0].proxy()
-        return self._controller
+    def bmcore(self):
+        if not self._bmcore:
+            self._bmcore = pykka.ActorRegistry.get_by_class_name("BMCore")[0].proxy()
+        return self._bmcore
 
     def as_list(self):
-        bookmarks = self.controller.list().get()
-        return [
-            Ref.playlist(name=bm['name'], uri=f"bookmark:{bm['name']}")
-            for bm in bookmarks
-        ]
+        return self.bmcore.as_list().get()
 
     def get_items(self, uri):
-        bm = self.controller.get(uri.split("bookmark:")[1]).get()
-        return [
-            Ref.track(uri=uri) for uri in bm.track_uris
-        ]
+        return self.bmcore.get_items(uri).get()
+
+    def delete(self, uri):
+        res =self.bmcore.delete(uri).get()
+        logger.info("DELETE: %s", res)
+        return res
+
+    def refresh(self):
+        pass
+
 class BookmarksBackend(pykka.ThreadingActor, backend.Backend):
     uri_schemes = ["bookmark"]
 
