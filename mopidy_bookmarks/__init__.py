@@ -11,6 +11,7 @@ from mopidy.core import CoreListener
 from . import handlers
 from .core import BMCore, PeriodicTimer
 from .backend import BookmarksBackend
+from .controllers import BookmarksController, StoreController
 
 __version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
 
@@ -68,8 +69,19 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         self.config = config
 
     def on_start(self):
+
+        self.bmcontroller = BookmarksController.start(
+            self.data_dir / "bookmark.sqlite3",
+            self.config["bookmarks"]["max_bookmarks"],
+            self.config["bookmarks"]["max_bookmark_length"]
+        )
+        self.storecontroller = StoreController.start(
+            self.data_dir / "bookmark.sqlite3",
+            100,
+            1000
+        )
         self.bmcore = BMCore.start(
-            self.mopidy_core, self.config, self.data_dir,
+            self.mopidy_core, self.config, self.bmcontroller,
             )
         tick_period = self.config["bookmarks"]["sync_period"]
         self.timer = PeriodicTimer.start(
@@ -81,6 +93,8 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
     def on_stop(self):
         logger.info('STOPPING')
         self.bmcore.stop()
+        self.bmcontroller.stop()
+        self.storecontroller.stop()
         self.timer.stop()
 
     def tracklist_changed(self):

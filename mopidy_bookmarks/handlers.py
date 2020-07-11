@@ -9,11 +9,12 @@ import pykka
 from mopidy.internal import jsonrpc
 from mopidy import models
 
-
 from mopidy.http.handlers import WebSocketHandler as MopidyWebSocketHandler, _send_broadcast
+
+from .controllers import StoreController
 logger = logging.getLogger(__name__)
 
-def make_jsonrpc_wrapper(bmcore_actor, BMCore):
+def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
     inspector = jsonrpc.JsonRpcInspector(
         objects={
             "core.create_from_tracklist": BMCore.create_from_tracklist,
@@ -22,6 +23,7 @@ def make_jsonrpc_wrapper(bmcore_actor, BMCore):
             "core.get_sync_status": BMCore.get_sync_status,
             "core.get_items": BMCore.get_items,
             "core.as_list": BMCore.as_list,
+            "core.store": StoreController,
         }
     )
     return jsonrpc.JsonRpcWrapper(
@@ -32,6 +34,7 @@ def make_jsonrpc_wrapper(bmcore_actor, BMCore):
             "core.get_sync_status": bmcore_actor.get_sync_status,
             "core.get_items": bmcore_actor.get_items,
             "core.as_list": bmcore_actor.as_list,
+            "core.store": store_actor,
             "core.describe": inspector.describe,
         },
 
@@ -63,7 +66,11 @@ class BMWebSocketHandler(MopidyWebSocketHandler):
         # tornado ioloop from the HttpServer thread of mopidy
         BMWebSocketHandler.io_loop = tornado.ioloop.IOLoop.current()
         bmcore_actor = pykka.ActorRegistry.get_by_class_name("BMCore")[0]
-        self.jsonrpc = make_jsonrpc_wrapper(bmcore_actor.proxy(), BMCore)
+        store_actor = pykka.ActorRegistry.get_by_class_name("StoreController")[0]
+        self.jsonrpc = make_jsonrpc_wrapper(
+            bmcore_actor.proxy(),
+            store_actor.proxy(),
+            BMCore)
         self.allowed_origins = allowed_origins
         self.csrf_protection = csrf_protection
 
@@ -77,4 +84,3 @@ class BMWebSocketHandler(MopidyWebSocketHandler):
         logger.debug(
             "Closed WebSocket connection from %s", self.request.remote_ip
         )
-

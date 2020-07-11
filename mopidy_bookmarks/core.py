@@ -11,7 +11,6 @@ from mopidy.internal import jsonrpc
 from mopidy import models
 
 from .handlers import BMWebSocketHandler
-from .controllers import BookmarksController
 
 logger = logging.getLogger(__name__)
 
@@ -24,22 +23,14 @@ def name_from_uri(uri):
 
 class BMCore(pykka.ThreadingActor):
 
-    def __init__(self, mopidy_core, config, data_dir):
+    def __init__(self, mopidy_core, config, bmcontroller_actor):
         super().__init__()
         self.mopidy_core = mopidy_core
 
-        self.bmcontroller_actor = BookmarksController.start(
-            data_dir / "bookmark.sqlite3",
-            config["bookmarks"]["max_bookmarks"],
-            config["bookmarks"]["max_bookmark_length"]
-        )
-        self.controller = self.bmcontroller_actor.proxy()
+        self.controller = bmcontroller_actor.proxy()
         self.current_bookmark = None
         self.resuming = False
         self.stop_to_ignore = 0
-
-    def on_stop(self):
-        self.bmcontroller_actor.stop()
 
     def _bookmark_to_model(self, bookmark):
         track_models = [
