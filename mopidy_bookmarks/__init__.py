@@ -86,7 +86,7 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         tick_period = self.config["bookmarks"]["sync_period"]
         self.timer = PeriodicTimer.start(
             tick_period,
-            lambda: self.bmcore.proxy().sync_current_bookmark()
+            lambda: self.bmcore.proxy()._sync_current_bookmark()
         )
         self.timer.proxy().start_ticking()
 

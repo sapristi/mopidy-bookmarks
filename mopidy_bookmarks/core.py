@@ -47,11 +47,11 @@ class BMCore(pykka.ThreadingActor):
 
     def _start_syncing(self, bookmark_name):
         self.current_bookmark = bookmark_name
-        self.sync_current_bookmark()
+        self._sync_current_bookmark()
         event = {"event": "sync_status_update", "bookmark": bookmark_name}
         BMWebSocketHandler.broadcast(event)
 
-    def sync_current_bookmark(self):
+    def _sync_current_bookmark(self):
         if not self.current_bookmark:
             return
         current_time = self.mopidy_core.playback.get_time_position().get()
@@ -64,7 +64,12 @@ class BMCore(pykka.ThreadingActor):
             return False
 
     def create_from_tracklist(self, name):
-        """Creates a new bookmark"""
+        """Creates a new bookmark
+
+        ##### Parameters
+        name: str
+            Name of the bookmark to create.
+        """
         tltracks = self.mopidy_core.tracklist.get_tl_tracks().get()
         tracks = [tlt.track for tlt in tltracks]
         tracks_dict = [{"uri": t.uri, "name": t.name, "length": t.length} for t in tracks]
