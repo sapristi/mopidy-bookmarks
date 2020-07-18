@@ -67,6 +67,7 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         self.mopidy_core = core
         self.data_dir = Extension.get_data_dir(config)
         self.config = config
+        self.bmcore = None
 
     def on_start(self):
 
@@ -74,21 +75,23 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
             self.data_dir / "bookmark.sqlite3",
             self.config["bookmarks"]["max_bookmarks"],
             self.config["bookmarks"]["max_bookmark_length"]
-        )
+        ).proxy()
         self.storecontroller = StoreController.start(
             self.data_dir / "bookmark.sqlite3",
             100,
             1000
-        )
+        ).proxy()
         self.bmcore = BMCore.start(
             self.mopidy_core, self.config, self.bmcontroller,
-            )
+        ).proxy()
+
         tick_period = self.config["bookmarks"]["sync_period"]
         self.timer = PeriodicTimer.start(
             tick_period,
-            lambda: self.bmcore.proxy()._sync_current_bookmark()
-        )
-        self.timer.proxy().start_ticking()
+            self.bmcore.sync_current_bookmark
+        ).proxy()
+        self.timer.start_ticking()
+        logger.debug("CoreListener started")
 
     def on_stop(self):
         logger.info('STOPPING')
@@ -98,8 +101,7 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         self.timer.stop()
 
     def tracklist_changed(self):
-        logger.info('tracklist changed')
-        self.bmcore.proxy().stop_sync()
+        self.bmcore.stop_sync()
 
     def playback_state_changed(self, old_state, new_state):
         logger.info("new state: %s -> %s", old_state, new_state)

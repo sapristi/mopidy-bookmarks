@@ -9,6 +9,7 @@ from peewee import (
     TextField, IntegerField,
     DoesNotExist
 )
+from mopidy import models
 
 from .generic import LTextField, JsonField, LimitError
 
@@ -27,6 +28,19 @@ class BookmarksController(pykka.ThreadingActor):
             last_modified = IntegerField(null=True)
             class Meta:
                 database = self.db
+
+            def to_mopidy_model(self):
+                track_models = [
+                    models.Track(**track)
+                    for track in bookmark.tracks
+                ]
+
+                return models.Playlist(
+                    uri=f"bookmark:{bookmark.name}",
+                    name=bookmark.name,
+                    tracks=list(track_models),
+                    last_modified=bookmark.last_modified
+                )
 
         self.Bookmark = Bookmark
         self.max_bookmarks = max_bookmarks
@@ -68,7 +82,10 @@ class BookmarksController(pykka.ThreadingActor):
             return False
 
     def get(self, name):
-        return self.Bookmark[name]
+        try:
+            return self.Bookmark[name]
+        except DoesNotExist:
+            return None
 
     def get_items(self, name):
         bm = self.Bookmark[name]

@@ -17,23 +17,19 @@ logger = logging.getLogger(__name__)
 def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
     inspector = jsonrpc.JsonRpcInspector(
         objects={
-            "core.create_from_tracklist": BMCore.create_from_tracklist,
             "core.resume": BMCore.resume,
+            "core.start_sync": BMCore.start_sync,
             "core.stop_sync": BMCore.stop_sync,
-            "core.get_sync_status": BMCore.get_sync_status,
-            "core.get_items": BMCore.get_items,
-            "core.as_list": BMCore.as_list,
+            "core.get_current_bookmark": BMCore.get_current_bookmark,
             "core.store": StoreController,
         }
     )
     return jsonrpc.JsonRpcWrapper(
         objects={
-            "core.create_from_tracklist": bmcore_actor.create_from_tracklist,
             "core.resume": bmcore_actor.resume,
+            "core.start_sync": bmcore_actor.start_sync,
             "core.stop_sync": bmcore_actor.stop_sync,
-            "core.get_sync_status": bmcore_actor.get_sync_status,
-            "core.get_items": bmcore_actor.get_items,
-            "core.as_list": bmcore_actor.as_list,
+            "core.get_current_bookmark": bmcore_actor.get_current_bookmark,
             "core.store": store_actor,
             "core.describe": inspector.describe,
         },

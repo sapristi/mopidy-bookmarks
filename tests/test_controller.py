@@ -18,26 +18,26 @@ def test_controller_simple():
     controller.save("test1", tl1).get()
     controller.update("test1", 1, 10).get()
 
-    bms = controller.list().get()
+    bms = controller.as_list().get()
     logger.info('BMS %s', bms)
     assert len(bms) == 1
 
-    bm = bms[0]
-    assert (bm["name"] == "test1" and
-            bm["track_uris"] == tl1 and
-            bm["current_track"] == 1 and
-            bm["current_time"] == 10)
+    bm = controller.get(bms[0]).get()
+    assert (bm.name == "test1" and
+            bm.tracks == tl1 and
+            bm.current_track == 1 and
+            bm.current_time == 10)
 
     controller.save("test1", tl2).get()
 
-    bm = controller.load("test1").get()
+    bm = controller.get("test1").get()
     assert (bm.name == "test1" and
-            bm.track_uris == tl2 and
+            bm.tracks == tl2 and
             bm.current_track == None and
             bm.current_time == None)
 
     controller.delete("test1").get()
-    assert len(controller.list().get()) == 0
+    assert len(controller.as_list().get()) == 0
 
     controller.stop()
 
