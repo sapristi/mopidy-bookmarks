@@ -56,13 +56,13 @@ class BMCore(pykka.ThreadingActor):
 
         Parameters
         ----------
-        uri: str
+        uri : str
             The uri of the bookmark to resume
 
         Returns
         -------
         bool
-            True if syncing started, else False
+            `True` if syncing started, else `False`
         """
         tltracks = self.mopidy_core.tracklist.get_tl_tracks().get()
         track_uris = [tlt.track.uri for tlt in tltracks]
@@ -74,6 +74,8 @@ class BMCore(pykka.ThreadingActor):
             self._start_syncing(name_from_uri(uri))
             return True
         else:
+            logger.warning("Cannot sync bookmark %s;"
+                           "tracklist and bookmark tracks are not the same")
             return False
 
     def resume(self, uri):
@@ -84,13 +86,13 @@ class BMCore(pykka.ThreadingActor):
 
         Parameters
         ----------
-        uri: str
+        uri : str
             The uri of the bookmark to resume
 
         Returns
         -------
         bool
-            True if a bookmark was found for the given uri, else False
+            `True` if a bookmark was found for the given uri, else `False`
         """
         name = name_from_uri(uri)
         bookmark = self.controller.get(name).get()
