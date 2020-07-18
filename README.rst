@@ -40,16 +40,16 @@ Access to the bookmarks API is provided by a websocket server, which works in ex
   
 The bookmarks API provides the following commands:
 
- - `start_sync` : Start synchronising a given bookmark with the current tracklist.
- - `resume` : Resumes playback from the given bookmark, and start syncing.
- - `stop_sync` : Stop synchronisation between the current bookmark and playback status.
- - `get_current_bookmark` : Get the current synchronising bookmark, if any.
+- `start_sync` : Start synchronising a given bookmark with the current tracklist.
+- `resume` : Resumes playback from the given bookmark, and start syncing.
+- `stop_sync` : Stop synchronisation between the current bookmark and playback status.
+- `get_current_bookmark` : Get the current synchronising bookmark, if any.
 
 See the `API section`_ for the API specification.
 
 Moreover, the following event will be broadcasted to the connected websocket clients:
 
-`sync_status_update`: When sync status changes.
+- `sync_status_update`: When sync status changes.
 
     The event payload is an object of the form `{bookmark: data}`, where `data` is the name of the bookmark being synchronised, or `null` if synchronisation has stopped.
 
