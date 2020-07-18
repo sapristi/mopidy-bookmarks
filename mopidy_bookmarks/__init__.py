@@ -33,6 +33,11 @@ class Extension(ext.Extension):
 
         schema["max_bookmarks"] = config.Integer(minimum=0)
         schema["max_bookmark_length"] = config.Integer(minimum=0)
+
+        schema["max_store_items"] = config.Integer(minimum=0)
+        schema["max_store_item_length"] = config.Integer(minimum=0)
+
+        schema["disable_limits"] = config.Boolean()
         return schema
 
     def setup(self, registry):
@@ -78,8 +83,8 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         ).proxy()
         self.storecontroller = StoreController.start(
             self.data_dir / "bookmark.sqlite3",
-            100,
-            1000
+            self.config["bookmarks"]["max_store_items"],
+            self.config["bookmarks"]["max_store_item_length"],
         ).proxy()
         self.bmcore = BMCore.start(
             self.mopidy_core, self.config, self.bmcontroller,
