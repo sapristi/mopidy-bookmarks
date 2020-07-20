@@ -6,20 +6,20 @@ used in tests of the frontends.
 
 
 import pykka
-
+import logging
 from mopidy import backend
-from mopidy.models import Playlist, Ref, SearchResult, Track
+from mopidy.models import Ref, SearchResult
 
-
-def create_proxy(config=None, audio=None):
-    return DummyBackend.start(config=config, audio=audio).proxy()
+logger = logging.getLogger(__name__)
 
 
 class DummyBackend(pykka.ThreadingActor, backend.Backend):
-    def __init__(self, config, audio):
+    def __init__(self, config, audio, library_tracks):
         super().__init__()
 
-        self.library = DummyLibraryProvider(backend=self)
+        self.library = DummyLibraryProvider(
+            library_tracks=library_tracks, backend=self
+        )
         if audio:
             self.playback = backend.PlaybackProvider(audio=audio, backend=self)
         else:
@@ -31,12 +31,9 @@ class DummyBackend(pykka.ThreadingActor, backend.Backend):
 class DummyLibraryProvider(backend.LibraryProvider):
     root_directory = Ref.directory(uri="dummy:/", name="dummy")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, library_tracks, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dummy_library = [
-            Track(uri=f"dummy:test{i}", length=1000)
-            for i in range(5)
-        ]
+        self.dummy_library = library_tracks
         self.dummy_get_distinct_result = {}
         self.dummy_browse_result = {}
         self.dummy_find_exact_result = SearchResult()

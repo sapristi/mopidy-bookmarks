@@ -15,8 +15,8 @@ from .utils import name_from_uri, bookmark_to_model
 
 logger = logging.getLogger(__name__)
 
-class BMCore(pykka.ThreadingActor):
 
+class BMCore(pykka.ThreadingActor):
     def __init__(self, mopidy_core, config, bmcontroller):
         super().__init__()
         self.mopidy_core = mopidy_core
@@ -38,15 +38,21 @@ class BMCore(pykka.ThreadingActor):
     def sync_current_bookmark(self):
         if not self.current_bookmark:
             return
-        logger.info("Syncing bookmark %s", self.current_bookmark)
+        logger.debug("Syncing bookmark %s", self.current_bookmark)
         current_time = self.mopidy_core.playback.get_time_position().get()
         current_track = self.mopidy_core.tracklist.index().get()
 
         if current_time is not None and current_track is not None:
-            self.controller.update(self.current_bookmark, current_track, current_time)
+            self.controller.update(
+                self.current_bookmark, current_track, current_time
+            )
             return True
         else:
-            logger.warning("Cannot sync status: %s %s", current_track, current_time)
+            logger.warning(
+                "Cannot sync status: track=%s, time=%s",
+                current_track,
+                current_time,
+            )
             return False
 
     def start_sync(self, uri):
@@ -74,8 +80,10 @@ class BMCore(pykka.ThreadingActor):
             self._start_syncing(name_from_uri(uri))
             return True
         else:
-            logger.warning("Cannot sync bookmark %s;"
-                           "tracklist and bookmark tracks are not the same")
+            logger.warning(
+                "Cannot sync bookmark %s;"
+                "tracklist and bookmark tracks are not the same"
+            )
             return False
 
     def resume(self, uri):
@@ -107,8 +115,8 @@ class BMCore(pykka.ThreadingActor):
         tltracks = self.mopidy_core.tracklist.add(uris=bookmark_uris).get()
         if bookmark.current_track is not None:
             current_tlid = tltracks[bookmark.current_track].tlid
+            logger.info(f"RESUMING PLAYBACK FROM {current_tlid} now")
             self.mopidy_core.playback.play(tlid=current_tlid).get()
-            self.mopidy_core.playback.set_state("playing").get()
             logger.info("Resumed track %s", tltracks[bookmark.current_track])
 
             current_t = self.mopidy_core.playback.get_current_track().get()
@@ -116,7 +124,9 @@ class BMCore(pykka.ThreadingActor):
             logger.info("State %s; %s", current_t, state)
 
         if bookmark.current_time is not None:
-            self.mopidy_core.playback.seek(time_position=bookmark.current_time).get()
+            self.mopidy_core.playback.seek(
+                time_position=bookmark.current_time
+            ).get()
             logger.info("Seeked to %s", bookmark.current_time)
 
         self._start_syncing(name)
@@ -144,15 +154,16 @@ class BMCore(pykka.ThreadingActor):
         if self.current_bookmark:
             return models.Ref.playlist(
                 name=self.current_bookmark,
-                uri=f"bookmark:{self.current_bookmark}"
+                uri=f"bookmark:{self.current_bookmark}",
             )
         else:
             return None
 
+
 class PeriodicTimer(pykka.ThreadingActor):
     def __init__(self, period, callback):
         super().__init__()
-        self.period = period / 1000.
+        self.period = period / 1000.0
         self.stop_pending = False
         self.callback = callback
 
@@ -171,4 +182,3 @@ class PeriodicTimer(pykka.ThreadingActor):
 
         self.callback()
         threading.Timer(self.period, self._periodic).start()
-

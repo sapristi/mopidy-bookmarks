@@ -1,13 +1,7 @@
-import os
 import logging
 import pykka
 
-from peewee import (
-    Model, Field,
-    SqliteDatabase,
-    TextField, IntegerField,
-    DoesNotExist
-)
+from peewee import Model, SqliteDatabase, DoesNotExist
 
 from playhouse.shortcuts import model_to_dict
 from .generic import LTextField, JsonField, LimitError
@@ -20,6 +14,7 @@ class StoreController(pykka.ThreadingActor):
 
         super().__init__()
         self.db = SqliteDatabase(None)
+
         class Store(Model):
             key = LTextField(primary_key=True, max_length=100)
             value = JsonField(max_length=max_length, null=True)
@@ -40,11 +35,14 @@ class StoreController(pykka.ThreadingActor):
 
     def save(self, key, value):
         item, created = self.Store.get_or_create(key=key)
-        if (created and
-            self.max_items and
-            self.Store.select().count() > self.max_items
+        if (
+            created
+            and self.max_items
+            and self.Store.select().count() > self.max_items
         ):
-            raise LimitError(f"Maximum number of items ({self.max_items}) reached.")
+            raise LimitError(
+                f"Maximum number of items ({self.max_items}) reached."
+            )
         item.value = value
         item.save()
 

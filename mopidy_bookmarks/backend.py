@@ -3,10 +3,10 @@ import logging
 
 from mopidy import backend
 from mopidy import models
-from .controllers import BookmarksController
 from .utils import name_from_uri, bookmark_to_model
 
 logger = logging.getLogger(__name__)
+
 
 class BookmarksPlaylistProvider(backend.PlaylistsProvider):
     def __init__(self, backend, config):
@@ -17,19 +17,24 @@ class BookmarksPlaylistProvider(backend.PlaylistsProvider):
     @property
     def bmcore(self):
         if not self._bmcore:
-            self._bmcore = pykka.ActorRegistry.get_by_class_name("BMCore")[0].proxy()
+            self._bmcore = pykka.ActorRegistry.get_by_class_name("BMCore")[
+                0
+            ].proxy()
         return self._bmcore
 
     @property
     def bmcontroller(self):
         if not self._bmcontroller:
-            self._bmcontroller = pykka.ActorRegistry.get_by_class_name("BookmarksController")[0].proxy()
+            self._bmcontroller = pykka.ActorRegistry.get_by_class_name(
+                "BookmarksController"
+            )[0].proxy()
         return self._bmcontroller
 
     def get_items(self, uri):
         tracks = self.bmcontroller.get_items(name_from_uri(uri)).get()
         return [
-            models.Ref.track(name=track["name"], uri=track["uri"]) for track in tracks
+            models.Ref.track(name=track["name"], uri=track["uri"])
+            for track in tracks
         ]
 
     def as_list(self):
@@ -80,3 +85,4 @@ class BookmarksBackend(pykka.ThreadingActor, backend.Backend):
         super().__init__()
         self.audio = audio
         self.playlists = BookmarksPlaylistProvider(self, config)
+        self.playback = backend.PlaybackProvider(audio=audio, backend=self)

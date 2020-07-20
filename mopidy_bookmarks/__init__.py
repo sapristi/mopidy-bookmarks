@@ -1,8 +1,6 @@
 import logging
 import pathlib
-import json
 import pkg_resources
-import tornado
 import pykka
 
 from mopidy import config, ext
@@ -43,9 +41,8 @@ class Extension(ext.Extension):
     def setup(self, registry):
         registry.add("frontend", MopidyCoreListener)
         registry.add(
-            "http:app", {
-                "name": self.ext_name,
-                "factory": self.http_app_factory}
+            "http:app",
+            {"name": self.ext_name, "factory": self.http_app_factory},
         )
         registry.add("backend", BookmarksBackend)
 
@@ -56,12 +53,14 @@ class Extension(ext.Extension):
 
         return [
             (
-                r"/ws/?", handlers.BMWebSocketHandler, {
+                r"/ws/?",
+                handlers.BMWebSocketHandler,
+                {
                     "core": core,
                     "BMCore": BMCore,
                     "allowed_origins": allowed_origins,
-                    "csrf_protection": config["http"]["csrf_protection"]
-                }
+                    "csrf_protection": config["http"]["csrf_protection"],
+                },
             )
         ]
 
@@ -79,7 +78,7 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         self.bmcontroller = BookmarksController.start(
             self.data_dir / "bookmark.sqlite3",
             self.config["bookmarks"]["max_bookmarks"],
-            self.config["bookmarks"]["max_bookmark_length"]
+            self.config["bookmarks"]["max_bookmark_length"],
         ).proxy()
         self.storecontroller = StoreController.start(
             self.data_dir / "bookmark.sqlite3",
@@ -92,14 +91,13 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
 
         tick_period = self.config["bookmarks"]["sync_period"]
         self.timer = PeriodicTimer.start(
-            tick_period,
-            self.bmcore.sync_current_bookmark
+            tick_period, self.bmcore.sync_current_bookmark
         ).proxy()
         self.timer.start_ticking()
         logger.debug("CoreListener started")
 
     def on_stop(self):
-        logger.info('STOPPING')
+        logger.info("STOPPING")
         self.bmcore.stop()
         self.bmcontroller.stop()
         self.storecontroller.stop()

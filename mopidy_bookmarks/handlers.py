@@ -9,10 +9,15 @@ import pykka
 from mopidy.internal import jsonrpc
 from mopidy import models
 
-from mopidy.http.handlers import WebSocketHandler as MopidyWebSocketHandler, _send_broadcast
+from mopidy.http.handlers import (
+    WebSocketHandler as MopidyWebSocketHandler,
+    _send_broadcast,
+)
 
 from .controllers import StoreController
+
 logger = logging.getLogger(__name__)
+
 
 def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
     inspector = jsonrpc.JsonRpcInspector(
@@ -33,7 +38,6 @@ def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
             "core.store": store_actor,
             "core.describe": inspector.describe,
         },
-
         decoders=[models.model_json_decoder],
         encoders=[models.ModelJSONEncoder],
     )
@@ -62,11 +66,12 @@ class BMWebSocketHandler(MopidyWebSocketHandler):
         # tornado ioloop from the HttpServer thread of mopidy
         BMWebSocketHandler.io_loop = tornado.ioloop.IOLoop.current()
         bmcore_actor = pykka.ActorRegistry.get_by_class_name("BMCore")[0]
-        store_actor = pykka.ActorRegistry.get_by_class_name("StoreController")[0]
+        store_actor = pykka.ActorRegistry.get_by_class_name("StoreController")[
+            0
+        ]
         self.jsonrpc = make_jsonrpc_wrapper(
-            bmcore_actor.proxy(),
-            store_actor.proxy(),
-            BMCore)
+            bmcore_actor.proxy(), store_actor.proxy(), BMCore
+        )
         self.allowed_origins = allowed_origins
         self.csrf_protection = csrf_protection
 
