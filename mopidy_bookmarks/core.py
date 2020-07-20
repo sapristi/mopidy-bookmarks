@@ -1,17 +1,11 @@
 import pykka
 import logging
-import functools
-import json
-import asyncio
 import threading
-from playhouse.shortcuts import model_to_dict
 
-import tornado.websocket
-from mopidy.internal import jsonrpc
 from mopidy import models
 
 from .handlers import BMWebSocketHandler
-from .utils import name_from_uri, bookmark_to_model
+from .utils import name_from_uri
 
 logger = logging.getLogger(__name__)
 

@@ -36,8 +36,8 @@ def test_controller_simple():
     assert (
         bm.name == "test1"
         and bm.tracks == tl2
-        and bm.current_track == None
-        and bm.current_time == None
+        and bm.current_track is None
+        and bm.current_time is None
     )
 
     controller.delete("test1").get()
@@ -52,13 +52,13 @@ def test_controller_limits():
 
     try:
         controller.save("t" * 101, tl1).get()
-        assert False
+        raise AssertionError()
     except LimitError:
         assert True
 
     try:
         controller.save("test1", tl3).get()
-        assert False
+        raise AssertionError()
     except LimitError:
         assert True
 
@@ -67,7 +67,7 @@ def test_controller_limits():
     controller.save("test3", tl1).get()
     try:
         controller.save("test4", tl1).get()
-        assert False
+        raise AssertionError()
     except LimitError:
         assert True
 

@@ -11,7 +11,7 @@ from tests.dummy_audio import DummyAudio
 @pytest.fixture
 def config():
     return {
-        "core": {"data_dir": "tests/data", "max_tracklist_length": 100,},
+        "core": {"data_dir": "tests/data", "max_tracklist_length": 100},
         "http": {"hostname": "127.0.0.1", "port": "6680"},
         "bookmarks": {
             "enabled": True,
