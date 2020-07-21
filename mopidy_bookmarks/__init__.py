@@ -12,7 +12,6 @@ from .backend import BookmarksBackend
 from .controllers import BookmarksController, StoreController
 
 __version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
-
 logger = logging.getLogger(__name__)
 
 
