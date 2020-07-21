@@ -10,31 +10,31 @@ workflows:
       - py38:
           filters:
             branches:
-              only: release/*
+              only: /^release.*/
             tags:
               only: /^v.*/
       - py37:
           filters:
             branches:
-              only: release/*
+              only: /^release.*/
             tags:
               only: /^v.*/
       - black:
           filters:
             branches:
-              only: release/*
+              only: /^release.*/
             tags:
               only: /^v.*/
       - check-manifest:
           filters:
             branches:
-              only: release/*
+              only: /^release.*/
             tags:
               only: /^v.*/
       - flake8:
           filters:
             branches:
-              only: release/*
+              only: /^release.*/
             tags:
               only: /^v.*/
       - deploy:
@@ -45,6 +45,8 @@ workflows:
             - check-manifest
             - flake8
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v.*/
 jobs:
