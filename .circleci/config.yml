@@ -7,11 +7,36 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - py38
-      - py37
-      - black
-      - check-manifest
-      - flake8
+      - py38:
+          filters:
+            branches:
+              only: release/*
+            tags:
+              only: /^v.*/
+      - py37:
+          filters:
+            branches:
+              only: release/*
+            tags:
+              only: /^v.*/
+      - black:
+          filters:
+            branches:
+              only: release/*
+            tags:
+              only: /^v.*/
+      - check-manifest:
+          filters:
+            branches:
+              only: release/*
+            tags:
+              only: /^v.*/
+      - flake8:
+          filters:
+            branches:
+              only: release/*
+            tags:
+              only: /^v.*/
       - deploy:
           requires:
             - py38
@@ -64,6 +89,11 @@ jobs:
       - image: mopidy/ci-python:3.7
     steps:
       - checkout
+      - run:
+          name: Prepare .pypirc
+          command: |
+            echo -e "[distutils]\nindex-servers =\n pypi" >> ~/.pypirc
+            echo -e "[pypi]\nusername = sapristi\npassword = $PYPI_PASSWORD" >> ~/.pypirc
       - run:
           name: Create and distribute package to pypi
           command: python setup.py sdist upload -r pypi

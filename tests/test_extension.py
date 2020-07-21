@@ -1,3 +1,5 @@
+import time
+
 import mopidy_bookmarks
 import mopidy
 
@@ -60,6 +62,7 @@ def test_bmcore(setup_actors, tracks):
 
     # Clear the tracklist will stop sync
     mopidy_core.tracklist.clear().get()
+    time.sleep(0.5)
     assert bmcore.get_current_bookmark().get() is None
 
     # Resume: setup tracklist, current track/time and sync status
