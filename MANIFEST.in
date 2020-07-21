@@ -13,3 +13,4 @@ include mopidy_*/ext.conf
 
 recursive-include tests *.py
 
+global-exclude *.sqlite3
