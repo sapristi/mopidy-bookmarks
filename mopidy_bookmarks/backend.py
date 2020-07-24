@@ -53,7 +53,7 @@ class BookmarksPlaylistProvider(backend.PlaylistsProvider):
         return res
 
     def lookup(self, uri):
-        bookmark = self.bmcontroller.get(self.name_from_uri(uri))
+        bookmark = self.bmcontroller.get(name_from_uri(uri)).get()
         if bookmark is None:
             return None
         return bookmark.to_mopidy_model()
