@@ -1,12 +1,8 @@
-import time
-
-import mopidy_bookmarks
 import mopidy
 
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 
 def test_backend(setup_actors, tracks):
