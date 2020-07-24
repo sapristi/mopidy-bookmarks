@@ -64,6 +64,7 @@ class BMCore(pykka.ThreadingActor):
         bool
             `True` if syncing started, else `False`
         """
+        logger.info("Start sync %s", uri)
         tltracks = self.mopidy_core.tracklist.get_tl_tracks().get()
         track_uris = [tlt.track.uri for tlt in tltracks]
         bookmark = self.controller.get(name_from_uri(uri)).get()
@@ -109,19 +110,21 @@ class BMCore(pykka.ThreadingActor):
         tltracks = self.mopidy_core.tracklist.add(uris=bookmark_uris).get()
         if bookmark.current_track is not None:
             current_tlid = tltracks[bookmark.current_track].tlid
-            logger.info(f"RESUMING PLAYBACK FROM {current_tlid} now")
             self.mopidy_core.playback.play(tlid=current_tlid).get()
             logger.info("Resumed track %s", tltracks[bookmark.current_track])
 
-            current_t = self.mopidy_core.playback.get_current_track().get()
-            state = self.mopidy_core.playback.get_state().get()
-            logger.info("State %s; %s", current_t, state)
+            # WHY DO I NEED THIS ??
+            self.mopidy_core.playback.set_state(new_state="playing").get()
 
         if bookmark.current_time is not None:
             self.mopidy_core.playback.seek(
                 time_position=bookmark.current_time
             ).get()
             logger.info("Seeked to %s", bookmark.current_time)
+
+        current_t = self.mopidy_core.playback.get_current_track().get()
+        state = self.mopidy_core.playback.get_state().get()
+        logger.info("State %s; %s", current_t, state)
 
         self._start_syncing(name)
         self.resuming = False
