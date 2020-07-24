@@ -10,31 +10,41 @@ workflows:
       - py38:
           filters:
             branches:
-              only: /^release.*/
+              only:
+                - /^release.*/
+                - develop
             tags:
               only: /^v.*/
       - py37:
           filters:
             branches:
-              only: /^release.*/
+              only: 
+                - /^release.*/
+                - develop
             tags:
               only: /^v.*/
       - black:
           filters:
             branches:
-              only: /^release.*/
+              only: 
+                - /^release.*/
+                - develop
             tags:
               only: /^v.*/
       - check-manifest:
           filters:
             branches:
-              only: /^release.*/
+              only: 
+                - /^release.*/
+                - develop
             tags:
               only: /^v.*/
       - flake8:
           filters:
             branches:
-              only: /^release.*/
+              only: 
+                - /^release.*/
+                - develop
             tags:
               only: /^v.*/
       - deploy:
