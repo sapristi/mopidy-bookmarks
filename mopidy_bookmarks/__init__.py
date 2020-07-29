@@ -74,10 +74,14 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
 
     def on_start(self):
 
-        limit_keys = ["max_bookmarks", "max_bookmark_length",
-                      "max_store_items", "max_store_item_length"]
+        limit_keys = [
+            "max_bookmarks",
+            "max_bookmark_length",
+            "max_store_items",
+            "max_store_item_length",
+        ]
         limits = {}
-        print("config" , self.config)
+        print("config", self.config)
         for key in limit_keys:
             if self.config["bookmarks"]["disable_limits"]:
                 limits[key] = 0
