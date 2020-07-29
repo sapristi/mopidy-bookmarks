@@ -74,15 +74,24 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
 
     def on_start(self):
 
+        limit_keys = ["max_bookmarks", "max_bookmark_length",
+                      "max_store_items", "max_store_item_length"]
+        limits = {}
+        for key in limit_keys:
+            if config["bookmarks"]["disable_limits"]:
+                limits[key] = 0
+            else:
+                limits[key] = config["bookmarks"][key]
+
         self.bmcontroller = BookmarksController.start(
             self.data_dir / "bookmark.sqlite3",
-            self.config["bookmarks"]["max_bookmarks"],
-            self.config["bookmarks"]["max_bookmark_length"],
+            limits["max_bookmarks"],
+            limits["max_bookmark_length"],
         ).proxy()
         self.storecontroller = StoreController.start(
             self.data_dir / "bookmark.sqlite3",
-            self.config["bookmarks"]["max_store_items"],
-            self.config["bookmarks"]["max_store_item_length"],
+            limits["max_store_items"],
+            limits["max_store_item_length"],
         ).proxy()
         self.bmcore = BMCore.start(
             self.mopidy_core, self.config, self.bmcontroller,
@@ -96,7 +105,6 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         logger.debug("CoreListener started")
 
     def on_stop(self):
-        logger.info("STOPPING")
         self.bmcore.stop()
         self.bmcontroller.stop()
         self.storecontroller.stop()
@@ -104,6 +112,3 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
 
     def tracklist_changed(self):
         self.bmcore.stop_sync()
-
-    def playback_state_changed(self, old_state, new_state):
-        logger.info("new state: %s -> %s", old_state, new_state)

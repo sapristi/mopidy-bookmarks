@@ -113,12 +113,26 @@ See https://mopidy.com/ext/bookmarks/ for alternative installation methods.
 Configuration
 =============
 
-Before starting Mopidy, you must add configuration for
-Mopidy-Bookmarks to your Mopidy configuration file::
+Mopidy-Bookmarks provides the following configuration keys (and their default values). ::
 
-    [bookmarks]
-    # TODO: Add example of extension config
+      [bookmarks]
+      enabled = true
 
+      # sync period, in milliseconds
+      sync_period = 500
+
+      # set this to false to enable limits defined below
+      # (usefull if mopidy listens on a public network e.g.
+      disable_limits = true
+      # max number of bookmarks
+      max_bookmarks = 100
+      # max size of data for one bookmark
+      max_bookmark_length = 100000
+
+      # max number of items in store
+      max_store_items = 10
+      # max store item length
+      max_store_item_length = 1000
 
 Project resources
 =================

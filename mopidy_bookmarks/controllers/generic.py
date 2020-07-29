@@ -25,4 +25,4 @@ class JsonField(LTextField):
         return super().db_value(json.dumps(value))
 
     def python_value(self, value):
-        return json.loads(value) if value else None
+        return json.loads(value) if value is not None else None
