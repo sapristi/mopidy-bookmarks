@@ -77,11 +77,12 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
         limit_keys = ["max_bookmarks", "max_bookmark_length",
                       "max_store_items", "max_store_item_length"]
         limits = {}
+        print("config" , self.config)
         for key in limit_keys:
-            if config["bookmarks"]["disable_limits"]:
+            if self.config["bookmarks"]["disable_limits"]:
                 limits[key] = 0
             else:
-                limits[key] = config["bookmarks"][key]
+                limits[key] = self.config["bookmarks"][key]
 
         self.bmcontroller = BookmarksController.start(
             self.data_dir / "bookmark.sqlite3",
