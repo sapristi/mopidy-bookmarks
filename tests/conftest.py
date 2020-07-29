@@ -20,7 +20,7 @@ def config():
             "max_bookmark_length": 1000,
             "max_store_items": 10,
             "max_store_item_length": 1000,
-            "disable_limits": False
+            "disable_limits": False,
         },
     }
 
