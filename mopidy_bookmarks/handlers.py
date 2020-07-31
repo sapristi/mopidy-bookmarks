@@ -26,7 +26,9 @@ def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
             "core.start_sync": BMCore.start_sync,
             "core.stop_sync": BMCore.stop_sync,
             "core.get_current_bookmark": BMCore.get_current_bookmark,
-            "core.store": StoreController,
+            "core.store.get": StoreController.get,
+            "core.store.set": StoreController.set,
+            "core.store.delete": StoreController.delete,
         }
     )
     return jsonrpc.JsonRpcWrapper(
@@ -35,7 +37,9 @@ def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
             "core.start_sync": bmcore_actor.start_sync,
             "core.stop_sync": bmcore_actor.stop_sync,
             "core.get_current_bookmark": bmcore_actor.get_current_bookmark,
-            "core.store": store_actor,
+            "core.store.get": store_actor.get,
+            "core.store.set": store_actor.set,
+            "core.store.delete": store_actor.delete,
             "core.describe": inspector.describe,
         },
         decoders=[models.model_json_decoder],

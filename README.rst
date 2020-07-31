@@ -107,8 +107,6 @@ Install by running::
 
 Note that this extension is a dependency of `mopidy-mowecl`, so it will already be installed if you are using this client.
 
-See https://mopidy.com/ext/bookmarks/ for alternative installation methods.
-
 
 Configuration
 =============
