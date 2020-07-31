@@ -33,7 +33,14 @@ class StoreController(pykka.ThreadingActor):
     def on_stop(self):
         self.db.close()
 
-    def save(self, key, value):
+    def set(self, key, value):
+        """Stores the given (key, value) pair.
+
+        Parameters
+        ----------
+        key: str
+        value: Json encodable python object
+        """
         item, created = self.Store.get_or_create(key=key)
         if (
             created
@@ -47,11 +54,15 @@ class StoreController(pykka.ThreadingActor):
         item.save()
 
     def get(self, key):
+        """Retrieves the value associated with the given key.
+        Decodes the value from json.
+        """
         try:
-            return model_to_dict(self.Store[key])
+            return model_to_dict(self.Store[key])["value"]
         except DoesNotExist:
             return None
 
     def delete(self, key):
+        """Deletes the value associated with the given key."""
         item = self.Store[key]
         item.delete_instance()
