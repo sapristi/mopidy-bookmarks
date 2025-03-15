@@ -28,6 +28,7 @@ Inner design and operation
 Bookmarks are exposed as regular mopidy playlists, under the `bookmark:` uri.
 
 A websocket interface gives additional control:
+
 - start syncing the current tracklist with a bookmark, i.e. store current track and time along with the playlist.
 - resume a given bookmark (i.e. restore tracklist and start playing).
 - stop the syncing.
@@ -86,13 +87,14 @@ Access to the bookmarks API is provided by a websocket server, which works in ex
 
         bookmarksClient.resume({uri: BMPlaylist.uri })
 
-.. _Mopidy-js Client: https://github.com/mopidy/mopidy.js
 
 
-Finally, you can react to change in synchronisation status with the following:
+6. Finally, you can react to change in synchronisation status with the following:
     .. code-block:: javascript
 
       bookmarksClient.on("event:syncStatusUpdate", (newStatus) => ... )
+
+.. _Mopidy-js Client: https://github.com/mopidy/mopidy.js
 
 
 API
@@ -170,7 +172,7 @@ Mopidy-Bookmarks provides the following configuration keys (and their default va
       sync_period = 500
 
       # set this to false to enable limits defined below
-      # (usefull if mopidy listens on a public network e.g.
+      # (usefull if mopidy listens on a public network e.g.)
       disable_limits = true
       # max number of bookmarks
       max_bookmarks = 100
