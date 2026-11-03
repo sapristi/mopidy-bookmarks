@@ -10,10 +10,6 @@ Mopidy-Bookmarks
     :target: https://github.com/sapristi/mopidy-bookmarks/actions/workflows/python-package.yml
     :alt: CI build status
 
-.. image:: https://img.shields.io/codecov/c/gh/sapristi/mopidy-bookmarks
-    :target: https://codecov.io/gh/sapristi/mopidy-bookmarks
-    :alt: Test coverage
-
 Provides bookmarks functionalities to mopidy.
 
 Bookmarks are playlist that can be synced with the current playback state, so that you can easily stop listening to some tracklist, listen to something else, and later resume at the position where you stopped. This is most usefull when listening to audiobooks.

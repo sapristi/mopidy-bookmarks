@@ -5,6 +5,7 @@ include LICENSE
 include MANIFEST.in
 include pyproject.toml
 include tox.ini
+include .pre-commit-config.yaml
 
 recursive-include .github *
 
