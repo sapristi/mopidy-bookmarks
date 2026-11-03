@@ -6,9 +6,9 @@ Mopidy-Bookmarks
     :target: https://pypi.org/project/Mopidy-Bookmarks/
     :alt: Latest PyPI version
 
-.. image:: https://img.shields.io/circleci/build/gh/sapristi/mopidy-bookmarks
-    :target: https://circleci.com/gh/sapristi/mopidy-bookmarks
-    :alt: CircleCI build status
+.. image:: https://github.com/sapristi/mopidy-bookmarks/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/sapristi/mopidy-bookmarks/actions/workflows/python-package.yml
+    :alt: CI build status
 
 .. image:: https://img.shields.io/codecov/c/gh/sapristi/mopidy-bookmarks
     :target: https://codecov.io/gh/sapristi/mopidy-bookmarks
