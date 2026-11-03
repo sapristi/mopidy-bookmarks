@@ -1,9 +1,10 @@
-import pykka
 import logging
+from typing import ClassVar
 
-from mopidy import backend
-from mopidy import models
-from .utils import name_from_uri, bookmark_to_model
+import pykka
+from mopidy import backend, models
+
+from .utils import bookmark_to_model, name_from_uri
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class BookmarksPlaylistProvider(backend.PlaylistsProvider):
 
 
 class BookmarksBackend(pykka.ThreadingActor, backend.Backend):
-    uri_schemes = ["bookmark"]
+    uri_schemes: ClassVar[list] = ["bookmark"]
 
     def __init__(self, config, audio):
         super().__init__()

@@ -1,4 +1,5 @@
 import logging
+
 from mopidy import models
 
 logger = logging.getLogger(__name__)

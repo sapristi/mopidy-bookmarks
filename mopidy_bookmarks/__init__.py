@@ -1,19 +1,20 @@
 import logging
 import pathlib
+
 import pykka
 
 try:
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 except ImportError:
-    from importlib_metadata import version, PackageNotFoundError  # type: ignore
+    from importlib_metadata import PackageNotFoundError, version  # type: ignore
 
 from mopidy import config, ext
 from mopidy.core import CoreListener
 
 from . import handlers
-from .core import BMCore, PeriodicTimer
 from .backend import BookmarksBackend
 from .controllers import BookmarksController, StoreController
+from .core import BMCore, PeriodicTimer
 
 try:
     __version__ = version("Mopidy-Bookmarks")
@@ -24,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class Extension(ext.Extension):
-
     dist_name = "Mopidy-Bookmarks"
     ext_name = "bookmarks"
     version = __version__
@@ -107,7 +107,9 @@ class MopidyCoreListener(pykka.ThreadingActor, CoreListener):
             limits["max_store_item_length"],
         ).proxy()
         self.bmcore = BMCore.start(
-            self.mopidy_core, self.config, self.bmcontroller,
+            self.mopidy_core,
+            self.config,
+            self.bmcontroller,
         ).proxy()
 
         tick_period = self.config["bookmarks"]["sync_period"]

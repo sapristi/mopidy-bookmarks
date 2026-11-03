@@ -1,7 +1,7 @@
-import pykka
 import logging
 import threading
 
+import pykka
 from mopidy import models
 
 from .handlers import BMWebSocketHandler

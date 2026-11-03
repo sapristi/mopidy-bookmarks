@@ -1,7 +1,7 @@
-from mopidy_bookmarks.controllers.bookmarks import BookmarksController
-from mopidy_bookmarks.controllers.generic import LimitError
 import logging
 
+from mopidy_bookmarks.controllers.bookmarks import BookmarksController
+from mopidy_bookmarks.controllers.generic import LimitError
 
 pykka_logger = logging.getLogger("pykka")
 pykka_logger.setLevel(logging.WARNING)

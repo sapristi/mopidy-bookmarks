@@ -18,7 +18,6 @@ def test_handlers_importable():
 def test_make_jsonrpc_wrapper_describe():
     from mopidy_bookmarks import handlers as h
     from mopidy_bookmarks.core import BMCore
-    from mopidy_bookmarks.controllers import StoreController
 
     inspector_methods = [
         "core.resume",
@@ -60,9 +59,7 @@ def test_make_jsonrpc_wrapper_describe():
 
     # core.describe must be exposed and list our methods
     response_raw = wrapper.handle_json(
-        json.dumps(
-            {"jsonrpc": "2.0", "id": 1, "method": "core.describe"}
-        )
+        json.dumps({"jsonrpc": "2.0", "id": 1, "method": "core.describe"})
     )
     assert response_raw is not None
     # handle_json returns bytes on Mopidy 4, str on Mopidy 3
@@ -75,8 +72,9 @@ def test_make_jsonrpc_wrapper_describe():
 
 
 def test_websocket_handler_base():
-    from mopidy_bookmarks import handlers as h
     import tornado.websocket
+
+    from mopidy_bookmarks import handlers as h
 
     assert issubclass(h.BMWebSocketHandler, tornado.websocket.WebSocketHandler)
     assert hasattr(h.BMWebSocketHandler, "broadcast")

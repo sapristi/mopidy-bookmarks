@@ -1,4 +1,5 @@
 import json
+
 from peewee import TextField
 
 
@@ -12,11 +13,10 @@ class LTextField(TextField):
         self.max_length = max_length
 
     def db_value(self, value):
-        if value:
-            if self.max_length and len(value) > self.max_length:
-                raise LimitError(
-                    f"sqlite field max length ({self.max_length}) exceeded"
-                )
+        if value and self.max_length and len(value) > self.max_length:
+            raise LimitError(
+                f"sqlite field max length ({self.max_length}) exceeded"
+            )
         return value
 
 

@@ -1,5 +1,4 @@
 import pykka
-
 from mopidy import audio
 
 from mopidy_bookmarks.compat import MOPIDY_V4

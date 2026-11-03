@@ -1,11 +1,11 @@
-import pytest
 import time
 
-import mopidy_bookmarks
 import mopidy
+import pytest
 
-from tests.dummy_backend import DummyBackend
+import mopidy_bookmarks
 from tests.dummy_audio import DummyAudio
+from tests.dummy_backend import DummyBackend
 
 
 @pytest.fixture
@@ -46,7 +46,8 @@ def setup_actors(config, tracks):
     ).proxy()
 
     core_listener = mopidy_bookmarks.MopidyCoreListener.start(
-        config, mopidy_core,
+        config,
+        mopidy_core,
     ).proxy()
 
     time.sleep(1)

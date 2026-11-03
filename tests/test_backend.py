@@ -1,6 +1,6 @@
-import mopidy
-
 import logging
+
+import mopidy
 
 logger = logging.getLogger(__name__)
 

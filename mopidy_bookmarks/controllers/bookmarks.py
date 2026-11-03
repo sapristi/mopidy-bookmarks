@@ -1,16 +1,16 @@
 import logging
-import pykka
 import time
 
+import pykka
+from mopidy import models
 from peewee import (
+    DoesNotExist,
+    IntegerField,
     Model,
     SqliteDatabase,
-    IntegerField,
-    DoesNotExist,
 )
-from mopidy import models
 
-from .generic import LTextField, JsonField, LimitError
+from .generic import JsonField, LimitError, LTextField
 
 logger = logging.getLogger(__name__)
 

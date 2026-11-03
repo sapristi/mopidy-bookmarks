@@ -1,10 +1,10 @@
 import logging
+
 import pykka
-
-from peewee import Model, SqliteDatabase, DoesNotExist
-
+from peewee import DoesNotExist, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from .generic import LTextField, JsonField, LimitError
+
+from .generic import JsonField, LimitError, LTextField
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,9 @@ This backend implements the backend API in the simplest way possible.  It is
 used in tests of the frontends.
 """
 
+import logging
 
 import pykka
-import logging
 from mopidy import backend
 from mopidy.models import Ref, SearchResult
 

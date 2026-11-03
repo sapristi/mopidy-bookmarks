@@ -1,9 +1,9 @@
+import logging
 import time
 
-import mopidy_bookmarks
 import mopidy
 
-import logging
+import mopidy_bookmarks
 
 logger = logging.getLogger(__name__)
 

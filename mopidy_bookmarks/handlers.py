@@ -1,10 +1,12 @@
-import tornado.websocket
-import tornado.ioloop
-import tornado.escape
-import tornado.web
-import logging
 import functools
+import logging
+from typing import ClassVar
+
 import pykka
+import tornado.escape
+import tornado.ioloop
+import tornado.web
+import tornado.websocket
 
 from .compat import MOPIDY_V4
 
@@ -13,15 +15,21 @@ if MOPIDY_V4:
     # Pydantic-based jsonrpc classes were renamed.
     from mopidy._exts.http.handlers import (
         WebSocketHandler as MopidyWebSocketHandler,
+    )
+    from mopidy._exts.http.handlers import (
         _send_broadcast,
     )
     from mopidy._exts.http.jsonrpc import (
         Inspector as JsonRpcInspector,
+    )
+    from mopidy._exts.http.jsonrpc import (
         Wrapper as JsonRpcWrapper,
     )
 else:
     from mopidy.http.handlers import (
         WebSocketHandler as MopidyWebSocketHandler,
+    )
+    from mopidy.http.handlers import (
         _send_broadcast,
     )
     from mopidy.internal.jsonrpc import JsonRpcInspector, JsonRpcWrapper
@@ -69,11 +77,10 @@ def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
 
 # Copy of mopidy WebSocketHandler to avoid clients collision
 class BMWebSocketHandler(MopidyWebSocketHandler):
-
     # XXX This set is shared by all WebSocketHandler objects. This isn't
     # optimal, but there's currently no use case for having more than one of
     # these anyway.
-    bmclients = set()
+    bmclients: ClassVar[set] = set()
     io_loop = None
 
     @classmethod
