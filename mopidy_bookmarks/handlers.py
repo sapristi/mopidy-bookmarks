@@ -6,13 +6,25 @@ import logging
 import functools
 import pykka
 
-from mopidy.internal import jsonrpc
-from mopidy import models
+from .compat import MOPIDY_V4
 
-from mopidy.http.handlers import (
-    WebSocketHandler as MopidyWebSocketHandler,
-    _send_broadcast,
-)
+if MOPIDY_V4:
+    # Mopidy >= 4.0: bundled extensions moved to mopidy._exts, and the
+    # Pydantic-based jsonrpc classes were renamed.
+    from mopidy._exts.http.handlers import (
+        WebSocketHandler as MopidyWebSocketHandler,
+        _send_broadcast,
+    )
+    from mopidy._exts.http.jsonrpc import (
+        Inspector as JsonRpcInspector,
+        Wrapper as JsonRpcWrapper,
+    )
+else:
+    from mopidy.http.handlers import (
+        WebSocketHandler as MopidyWebSocketHandler,
+        _send_broadcast,
+    )
+    from mopidy.internal.jsonrpc import JsonRpcInspector, JsonRpcWrapper
 
 from .controllers import StoreController
 
@@ -20,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
-    inspector = jsonrpc.JsonRpcInspector(
+    inspector = JsonRpcInspector(
         objects={
             "core.resume": BMCore.resume,
             "core.start_sync": BMCore.start_sync,
@@ -31,17 +43,25 @@ def make_jsonrpc_wrapper(bmcore_actor, store_actor, BMCore):
             "core.store.delete": StoreController.delete,
         }
     )
-    return jsonrpc.JsonRpcWrapper(
-        objects={
-            "core.resume": bmcore_actor.resume,
-            "core.start_sync": bmcore_actor.start_sync,
-            "core.stop_sync": bmcore_actor.stop_sync,
-            "core.get_current_bookmark": bmcore_actor.get_current_bookmark,
-            "core.store.get": store_actor.get,
-            "core.store.set": store_actor.set,
-            "core.store.delete": store_actor.delete,
-            "core.describe": inspector.describe,
-        },
+    objects = {
+        "core.resume": bmcore_actor.resume,
+        "core.start_sync": bmcore_actor.start_sync,
+        "core.stop_sync": bmcore_actor.stop_sync,
+        "core.get_current_bookmark": bmcore_actor.get_current_bookmark,
+        "core.store.get": store_actor.get,
+        "core.store.set": store_actor.set,
+        "core.store.delete": store_actor.delete,
+        "core.describe": inspector.describe,
+    }
+    if MOPIDY_V4:
+        # Pydantic-based Wrapper takes only `objects`.
+        return JsonRpcWrapper(objects=objects)
+
+    # Mopidy 3.x: custom model (de)serializers required.
+    from mopidy import models
+
+    return JsonRpcWrapper(
+        objects=objects,
         decoders=[models.model_json_decoder],
         encoders=[models.ModelJSONEncoder],
     )

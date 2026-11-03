@@ -1,7 +1,11 @@
 import logging
 import pathlib
-import pkg_resources
 import pykka
+
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ImportError:
+    from importlib_metadata import version, PackageNotFoundError  # type: ignore
 
 from mopidy import config, ext
 from mopidy.core import CoreListener
@@ -11,7 +15,11 @@ from .core import BMCore, PeriodicTimer
 from .backend import BookmarksBackend
 from .controllers import BookmarksController, StoreController
 
-__version__ = pkg_resources.get_distribution("Mopidy-Bookmarks").version
+try:
+    __version__ = version("Mopidy-Bookmarks")
+except PackageNotFoundError:
+    # Package not installed (e.g. running from source without install).
+    __version__ = "0.0.0"
 logger = logging.getLogger(__name__)
 
 
