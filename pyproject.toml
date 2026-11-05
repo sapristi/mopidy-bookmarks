@@ -1,5 +1,50 @@
 [build-system]
-requires = ["setuptools >= 30.3.0", "wheel"]
+requires = ["setuptools >= 77"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "Mopidy-Bookmarks"
+version = "0.1.4"
+description = "Provides bookmarks functionalities to mopidy."
+readme = "README.rst"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Mathias Millet", email = "mathiasmillet@gmail.com" }]
+requires-python = ">= 3.7"
+dependencies = [
+    "Mopidy >= 3.0.0",
+    "Pykka >= 2.0.1",
+    "setuptools",
+    "peewee >= 3.10.0",
+]
+classifiers = [
+    "Environment :: No Input/Output (Daemon)",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Players",
+]
+
+[project.urls]
+Homepage = "https://github.com/sapristi/mopidy-bookmarks"
+
+[project.optional-dependencies]
+lint = ["check-manifest", "pre-commit", "ruff"]
+release = ["twine", "wheel"]
+test = ["pytest", "pytest-cov", "tox"]
+dev = ["Mopidy-Bookmarks[lint,release,test]"]
+
+[project.entry-points."mopidy.ext"]
+bookmarks = "mopidy_bookmarks:Extension"
+
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["mopidy_bookmarks*"]
 
 
 [tool.ruff]

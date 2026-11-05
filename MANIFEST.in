@@ -1,4 +1,3 @@
-include *.py
 include *.rst
 include .mailmap
 include LICENSE
